@@ -24,6 +24,22 @@ resolve_root() {
   return 2
 }
 
+
+route_from_hint() {
+  # Priority: android-apk > js-reverse > binary-reverse > triage (aligned with MASTER-ROUTING / master-route)
+  local hint_lc
+  hint_lc=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+  if printf '%s' "$hint_lc" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk'; then
+    printf '%s\n' 'skills/android-apk/'
+  elif printf '%s' "$hint_lc" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs'; then
+    printf '%s\n' 'skills/js-reverse/'
+  elif printf '%s' "$hint_lc" | grep -Eqi 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制'; then
+    printf '%s\n' 'skills/binary-reverse/'
+  else
+    printf '%s\n' 'skills/triage/'
+  fi
+}
+
 HINT="" CASE_NAME="" PRESET="" SAMPLE="" PROJECT_ROOT=""
 AUTH_STATUS="pending" AUTH_BASIS="unknown" NETWORK="lab_only" EVIDENCE=""
 while [[ $# -gt 0 ]]; do
@@ -51,6 +67,13 @@ if [[ -z "$HINT" || -z "$CASE_NAME" ]]; then
 fi
 
 ROOT="$(resolve_root)" || exit $?
+PRIMARY="$(route_from_hint "$HINT")"
+PRIMARY_ABS="$ROOT/$PRIMARY"
+SKILL_MD="${PRIMARY_ABS}SKILL.md"
+if [[ ! -f "$SKILL_MD" ]]; then
+  echo "ERROR: PRIMARY skill missing: $SKILL_MD" >&2
+  exit 2
+fi
 
 if [[ -z "$PROJECT_ROOT" ]]; then
   PROJECT_ROOT="$(pwd -P)"
@@ -97,7 +120,7 @@ ASSETS=""
   printf '%s\n' "## meta"
   printf '%s\n' "- case_id: $CASE_NAME"
   printf '%s\n' "- created: $TS"
-  printf '%s\n' "- primary_skill: TBD-after-route"
+  printf '%s\n' "- primary_skill: $PRIMARY"
   printf '%s\n' "- project_root: $PROJECT_ROOT"
   printf '%s\n' "- skill_root: $ROOT"
   printf '%s\n' "- hint: $HINT" ""
@@ -125,6 +148,7 @@ ASSETS=""
 READY=false
 [[ "$AUTH_STATUS" == "granted" ]] && READY=true
 printf 'ROOT=%s\n' "$ROOT"
+printf 'PRIMARY=%s\n' "$PRIMARY"
 printf 'CASE_DIR=%s\n' "$CASE_DIR"
 printf 'auth.status=%s\n' "$AUTH_STATUS"
 printf 'ready_for_act=%s\n' "$READY"

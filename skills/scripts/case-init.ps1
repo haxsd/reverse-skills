@@ -35,6 +35,22 @@ function Resolve-SkillRoot {
   exit 2
 }
 
+
+function Get-PrimaryFromHint([string]$HintText) {
+  # Priority: android-apk > js-reverse > binary-reverse > triage (aligned with MASTER-ROUTING / master-route)
+  $h = $HintText.ToLowerInvariant()
+  if ($h -match 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk') {
+    return 'skills/android-apk/'
+  }
+  if ($h -match 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs') {
+    return 'skills/js-reverse/'
+  }
+  if ($h -match 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制') {
+    return 'skills/binary-reverse/'
+  }
+  return 'skills/triage/'
+}
+
 function Write-Utf8NoBom([string]$Path, [string]$Content) {
   $enc = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllText($Path, $Content, $enc)
@@ -46,6 +62,18 @@ if (-not $Hint -or -not $CaseName) {
 }
 
 $Root = Resolve-SkillRoot
+$primary = Get-PrimaryFromHint $Hint
+$primaryAbs = Join-Path $Root ($primary -replace '/', [IO.Path]::DirectorySeparatorChar)
+if (-not $primaryAbs.EndsWith([IO.Path]::DirectorySeparatorChar)) {
+  $primaryAbs = $primaryAbs + [IO.Path]::DirectorySeparatorChar
+}
+$skillMd = Join-Path $primaryAbs 'SKILL.md'
+if (-not (Test-Path -LiteralPath $skillMd -PathType Leaf)) {
+  Write-Error "PRIMARY skill missing: $skillMd"
+  exit 2
+}
+# Keep PRIMARY with forward slashes for cross-platform agent contracts
+$primaryOut = $primary -replace '\\', '/'
 if (-not $ProjectRoot) {
   $ProjectRoot = (Get-Location).Path
 } else {
@@ -101,7 +129,7 @@ $scope = @(
   "## meta",
   "- case_id: $CaseName",
   "- created: $ts",
-  "- primary_skill: TBD-after-route",
+  "- primary_skill: $primaryOut",
   "- project_root: $ProjectRoot",
   "- skill_root: $Root",
   "- hint: $Hint",
@@ -139,6 +167,7 @@ Write-Utf8NoBom -Path (Join-Path $caseDir "scope.md") -Content $scope
 
 $ready = ($authStatus -eq "granted")
 Write-Output "ROOT=$Root"
+Write-Output "PRIMARY=$primaryOut"
 Write-Output "CASE_DIR=$caseDir"
 Write-Output "auth.status=$authStatus"
 Write-Output ("ready_for_act=" + ($(if ($ready) { "true" } else { "false" })))

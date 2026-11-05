@@ -51,7 +51,7 @@ REASON="default triage for unknown/general sample"
 if printf '%s' "$HINT_LC" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk'; then
   PRIMARY="skills/android-apk/"
   REASON="Android/APK keywords in hint"
-elif printf '%s' "$HINT_LC" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|bundle\.js|\.mjs'; then
+elif printf '%s' "$HINT_LC" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs'; then
   PRIMARY="skills/js-reverse/"
   REASON="JS/deobfuscation/signing keywords in hint"
 elif printf '%s' "$HINT_LC" | grep -Eqi 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制'; then

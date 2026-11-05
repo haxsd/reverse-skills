@@ -41,7 +41,7 @@ $reason = "default triage for unknown/general sample"
 if ($h -match 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk') {
   $primary = "skills/android-apk/"
   $reason = "Android/APK keywords in hint"
-} elseif ($h -match 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|bundle\.js|\.mjs') {
+} elseif ($h -match 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs') {
   $primary = "skills/js-reverse/"
   $reason = "JS/deobfuscation/signing keywords in hint"
 } elseif ($h -match 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制') {
