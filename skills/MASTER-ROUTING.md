@@ -15,21 +15,29 @@
 
 ### 脚本入口
 
+先设 `REVERSE_SKILL_ROOT`（可选；未设则脚本按自身路径回退到本仓根）。bash / pwsh 输出键对齐：`ROOT` / `PRIMARY` / `CASE_DIR` / `auth.status` / `ready_for_act` / `DEGRADED`。
+
 ```bash
-bash skills/scripts/master-route.sh --hint "<任务>"
-bash skills/scripts/case-init.sh --hint "<任务>" --case-name my-case
-bash skills/scripts/case-init.sh --hint "offline apk" --case-name my-sample \
+export REVERSE_SKILL_ROOT="$HOME/tools/reverse-skills"   # 可选
+bash "$REVERSE_SKILL_ROOT/skills/scripts/master-route.sh" --hint "<任务>"
+bash "$REVERSE_SKILL_ROOT/skills/scripts/case-init.sh" --hint "<任务>" --case-name my-case
+bash "$REVERSE_SKILL_ROOT/skills/scripts/case-init.sh" --hint "offline apk" --case-name my-sample \
   --preset offline-sample --sample ./app.apk
-python3 skills/case-review/scripts/review_case.py work/<case>
+bash "$REVERSE_SKILL_ROOT/skills/scripts/check-tools.sh" --skill android-apk
+python3 "$REVERSE_SKILL_ROOT/skills/case-review/scripts/review_case.py" work/<case>
 ```
 
 ```powershell
-pwsh -NoProfile -File skills/scripts/master-route.ps1 -Hint "<任务>"
-pwsh -NoProfile -File skills/scripts/case-init.ps1 -Hint "<任务>" -CaseName my-case
-pwsh -NoProfile -File skills/scripts/case-init.ps1 -Hint "offline apk" -CaseName my-sample `
+$env:REVERSE_SKILL_ROOT = "$env:USERPROFILE\tools\reverse-skills"  # 可选
+pwsh -NoProfile -File "$env:REVERSE_SKILL_ROOT\skills\scripts\master-route.ps1" -Hint "<任务>"
+pwsh -NoProfile -File "$env:REVERSE_SKILL_ROOT\skills\scripts\case-init.ps1" -Hint "<任务>" -CaseName my-case
+pwsh -NoProfile -File "$env:REVERSE_SKILL_ROOT\skills\scripts\case-init.ps1" -Hint "offline apk" -CaseName my-sample `
   -Preset offline-sample -Sample .\app.apk
-python skills/case-review/scripts/review_case.py work/<case>
+pwsh -NoProfile -File "$env:REVERSE_SKILL_ROOT\skills\scripts\check-tools.ps1" -Skill android-apk
+python "$env:REVERSE_SKILL_ROOT\skills\case-review\scripts\review_case.py" work/<case>
 ```
+
+`check-tools` 读 `skills/registry.json`：缺**必需**工具时 exit 1 并打印 `MISSING_REQUIRED=` / `DEGRADED=true`（不 silent）；可选工具缺失只标 `DEGRADE_OPTIONAL=`。
 
 ## 第一批路由表
 

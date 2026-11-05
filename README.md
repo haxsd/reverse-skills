@@ -22,9 +22,10 @@ $env:REVERSE_SKILL_ROOT = "$env:USERPROFILE\tools\reverse-skills"
 ## 热路径
 
 1. 读 `RULES_zh.md` / `RULES.md`（授权硬门）
-2. 路由：`skills/MASTER-ROUTING.md` 或 `skills/scripts/master-route.*`
+2. 路由：`skills/MASTER-ROUTING.md` 或 `skills/scripts/master-route.*`（输出含 `ROOT=`）
 3. 建案：`skills/scripts/case-init.*`（`auth.status=granted` 或 `offline-sample` 预设）
-4. 打开 PRIMARY：`skills/triage/` 或 `skills/android-apk/`
+4. 工具：`skills/scripts/check-tools.* --skill <id>`（对照 `registry.json`，缺工具明确降级）
+5. 打开 PRIMARY：`skills/triage/` 或 `skills/android-apk/`
 
 ## 第一批模块
 

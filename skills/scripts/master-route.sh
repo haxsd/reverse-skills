@@ -1,14 +1,49 @@
 #!/usr/bin/env bash
-# Thin master-route for haxsd/reverse-skills v0.1.0
+# Thin master-route for haxsd/reverse-skills — bash ↔ pwsh aligned
 set -euo pipefail
+
+resolve_root() {
+  local candidate=""
+  if [[ -n "${REVERSE_SKILL_ROOT:-}" ]]; then
+    candidate="${REVERSE_SKILL_ROOT}"
+    if [[ -d "$candidate" && -f "$candidate/skills/registry.json" ]]; then
+      (cd "$candidate" && pwd -P)
+      return 0
+    fi
+    echo "ERROR: REVERSE_SKILL_ROOT is set but invalid: $candidate (need skills/registry.json)" >&2
+    return 2
+  fi
+  local here
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+  candidate="$(cd "$here/../.." && pwd -P)"
+  if [[ -f "$candidate/skills/registry.json" ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+  echo "ERROR: cannot resolve skill root; set REVERSE_SKILL_ROOT or run from the cloned repo" >&2
+  return 2
+}
+
 HINT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --hint|-Hint) HINT="${2:-}"; shift 2 ;;
-    -h|--help) echo "Usage: master-route.sh --hint <task>"; exit 0 ;;
-    *) HINT="${HINT:-$1}"; shift ;;
+    -h|--help)
+      echo "Usage: master-route.sh --hint <task>"
+      echo "Env: REVERSE_SKILL_ROOT (optional; defaults to repo containing this script)"
+      exit 0 ;;
+    *)
+      if [[ -z "$HINT" ]]; then HINT="$1"; shift; else echo "Unknown arg: $1" >&2; exit 2; fi
+      ;;
   esac
 done
+
+if [[ -z "$HINT" ]]; then
+  echo "ERROR: Usage: master-route.sh --hint <task>" >&2
+  exit 2
+fi
+
+ROOT="$(resolve_root)" || exit $?
 HINT_LC=$(printf '%s' "$HINT" | tr '[:upper:]' '[:lower:]')
 PRIMARY="skills/triage/"
 REASON="default triage for unknown/general sample"
@@ -16,7 +51,17 @@ if printf '%s' "$HINT_LC" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|
   PRIMARY="skills/android-apk/"
   REASON="Android/APK keywords in hint"
 fi
+
+PRIMARY_ABS="$ROOT/$PRIMARY"
+SKILL_MD="${PRIMARY_ABS}SKILL.md"
+if [[ ! -f "$SKILL_MD" ]]; then
+  echo "ERROR: PRIMARY skill missing: $SKILL_MD" >&2
+  exit 2
+fi
+
+printf 'ROOT=%s\n' "$ROOT"
 printf 'PRIMARY=%s\n' "$PRIMARY"
+printf 'PRIMARY_ABS=%s\n' "$PRIMARY_ABS"
 printf 'REASON=%s\n' "$REASON"
 printf 'HINT=%s\n' "$HINT"
-printf 'NEXT=Read %sSKILL.md after case-init scope is ready\n' "$PRIMARY"
+printf 'NEXT=Read %s after case-init scope is ready\n' "$SKILL_MD"
