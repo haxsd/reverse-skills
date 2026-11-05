@@ -17,3 +17,6 @@ requirements for those portions.
    Copyright of original authors and contributors.
    Adapted: Android APK fingerprint → decompile → API extract → call-flow playbook shape.
    Scripts are not vendored; agents use locally installed tools (jadx, apktool, etc.).
+
+Adapted ideas (not a copy of scripts): JS static-first / sandboxed-decoder degrade
+and native disassembly tool-choice degrade patterns from rekit skill docs.

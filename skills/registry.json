@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "skills": {
     "triage": {
       "path": "triage",
@@ -15,25 +15,17 @@
       "prerequisites": [
         {
           "tool": "python3",
-          "check": [
-            "python3",
-            "--version"
-          ],
+          "check": ["python3", "--version"],
           "optional": true
         },
         {
           "tool": "file",
-          "check": [
-            "file",
-            "--version"
-          ],
+          "check": ["file", "--version"],
           "optional": true
         }
       ],
       "authority": {
-        "actions": [
-          "read_local_target"
-        ],
+        "actions": ["read_local_target"],
         "credential_use": false
       }
     },
@@ -51,25 +43,83 @@
       "prerequisites": [
         {
           "tool": "jadx",
-          "check": [
-            "jadx",
-            "--version"
-          ],
+          "check": ["jadx", "--version"],
           "optional": false
         },
         {
           "tool": "apktool",
-          "check": [
-            "apktool",
-            "--version"
-          ],
+          "check": ["apktool", "--version"],
           "optional": true
         }
       ],
       "authority": {
-        "actions": [
-          "read_local_target"
-        ],
+        "actions": ["read_local_target"],
+        "credential_use": false
+      }
+    },
+    "js-reverse": {
+      "path": "js-reverse",
+      "name": "JavaScript reverse",
+      "description": "JS deobfuscation tiers, AST/static path, dynamic hook boundary, signing/crypto-param chain.",
+      "kind": "analyze",
+      "safety": {
+        "tier": 2,
+        "executes_input": "sandbox-decoder-only",
+        "network": "none-by-default",
+        "notes": "static first; browser/CDP needs granted non-offline scope; no whole-program unsandboxed eval"
+      },
+      "prerequisites": [
+        {
+          "tool": "node",
+          "check": ["node", "--version"],
+          "optional": true
+        },
+        {
+          "tool": "npx",
+          "check": ["npx", "--version"],
+          "optional": true
+        }
+      ],
+      "authority": {
+        "actions": ["read_local_target"],
+        "credential_use": false
+      }
+    },
+    "binary-reverse": {
+      "path": "binary-reverse",
+      "name": "Native binary reverse",
+      "description": "ELF/PE/Mach-O deep path after triage: surface, tool choice, disasm/decompile with honest degrade.",
+      "kind": "analyze",
+      "safety": {
+        "tier": 2,
+        "executes_input": "no",
+        "network": "none",
+        "notes": "static by default; debug/emulation needs separate granted scope"
+      },
+      "prerequisites": [
+        {
+          "tool": "r2",
+          "check": ["r2", "-v"],
+          "optional": true
+        },
+        {
+          "tool": "rizin",
+          "check": ["rizin", "-v"],
+          "optional": true
+        },
+        {
+          "tool": "objdump",
+          "check": ["objdump", "--version"],
+          "optional": true
+        },
+        {
+          "tool": "ghidra",
+          "check": ["ghidra", "--help"],
+          "optional": true
+        }
+      ],
+      "authority": {
+        "actions": ["read_local_target"],
         "credential_use": false
       }
     }

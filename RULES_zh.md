@@ -37,11 +37,11 @@
 
 用 `command -v` / `Get-Command` 确认工具。未检测到就如实说明，**不要**编造调用方式或假装已分析。可选工具缺失时跳过该步并记录。
 
-## 第一批范围
+## 收录范围（v0.2）
 
-仅：`triage`、`android-apk`，以及路由/授权/case-init/证据标签骨架。
+收录：`triage`、`android-apk`、`js-reverse`、`binary-reverse`，以及路由/授权/case-init/证据标签骨架。
 
-**不收 / 不做：** JS 深度模块、通用二进制深度模块（第二批）、pentest payload 字典、EDR/AV 绕过、未授权利用构造、对未授权目标的扫描/入侵/凭据窃取/持久化。
+**不收 / 不做：** 协议深度专项、CTF/pwn 利用编写、固件专项、pentest payload 字典、EDR/AV 绕过、未授权利用构造、对未授权目标的扫描/入侵/凭据窃取/持久化。
 
 ## 热路径
 

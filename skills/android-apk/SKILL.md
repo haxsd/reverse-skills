@@ -3,7 +3,7 @@ name: android-apk
 description: Android APK/XAPK/JAR/AAR 静态逆向：指纹、反编译、结构、API 提取与调用链。Use for authorized offline APK reverse engineering, jadx decompile, Retrofit/OkHttp/Ktor/Apollo surface mapping, and call-flow tracing — not for unauthorized device attacks.
 ---
 
-# Android / APK 逆向（第一批打通）
+# Android / APK 逆向
 
 ## ACTION REQUIRED
 
@@ -139,7 +139,7 @@ jadx -d work\<case>\android\step2\jadx-out --deobf $env:APK
 4. API 面摘要（高价值端点）  
 5. 调用链要点  
 6. JNI / `.so` 备注（若有）  
-7. 未知与下一步（第二批模块/人工）  
+7. 未知与下一步（其它模块 / 人工）  
 8. Findings 列表：每条带 severity（info 亦可）与 evidence ids  
 
 `step6/findings.json` 可用简易数组：`[{id,title,severity,evidence,location}]`。

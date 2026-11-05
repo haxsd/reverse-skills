@@ -28,11 +28,11 @@ Every claim uses `observed` | `inferred` | `proposed` | `web` (see `skills/core/
 
 Check with `command -v` / `Get-Command`. If missing, say so — do not invent invocations.
 
-## First-batch scope
+## Pack scope (v0.2)
 
-Only `triage`, `android-apk`, plus routing/auth/case-init/evidence skeleton.
+Includes `triage`, `android-apk`, `js-reverse`, `binary-reverse`, plus routing/auth/case-init/evidence skeleton.
 
-**Out of scope:** JS / deep-binary domain modules (batch 2), pentest payload dictionaries, EDR/AV bypass, unauthorized exploit construct, unauthorized scanning/intrusion/credential theft/persistence.
+**Out of scope:** deep protocol playbooks, CTF/pwn exploit authoring, firmware specialty packs, pentest payload dictionaries, EDR/AV bypass, unauthorized exploit construct, unauthorized scanning/intrusion/credential theft/persistence.
 
 ## Hot path
 

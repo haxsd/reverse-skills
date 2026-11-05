@@ -20,6 +20,8 @@ REQUIRED = [
     "skills/case-review/scripts/review_case.py",
     "skills/triage/SKILL.md",
     "skills/android-apk/SKILL.md",
+    "skills/js-reverse/SKILL.md",
+    "skills/binary-reverse/SKILL.md",
 ]
 
 

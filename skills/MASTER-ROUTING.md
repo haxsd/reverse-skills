@@ -39,16 +39,25 @@ python "$env:REVERSE_SKILL_ROOT\skills\case-review\scripts\review_case.py" work/
 
 `check-tools` 读 `skills/registry.json`：缺**必需**工具时 exit 1 并打印 `MISSING_REQUIRED=` / `DEGRADED=true`（不 silent）；可选工具缺失只标 `DEGRADE_OPTIONAL=`。
 
-## 第一批路由表
+## 路由表
 
 | 条件（命中任一） | PRIMARY |
 |---|---|
 | APK / XAPK / AAR / Android / jadx / smali / Manifest / Retrofit / 安卓逆向 | `skills/android-apk/` |
-| 未知文件类型 / 先分诊 / ELF / PE / Mach-O / DEX magic / 「这是什么文件」 | `skills/triage/` |
+| JS / JavaScript / webpack / obfuscator / sourcemap / 解混淆 / 前端签名 / 加密参数 / bundle | `skills/js-reverse/` |
+| 明确深度原生逆向：ghidra / ida / radare / rizin / 反汇编 / 反编译 ELF\|PE\|Mach-O / 「分析这个 so/dll/exe」 | `skills/binary-reverse/` |
+| 未知文件类型 / 先分诊 / 仅 magic/「这是什么文件」 | `skills/triage/` |
 | 仅授权/建案/规则问题 | 停在 RULES + case-init，不选领域模块 |
 
-多条件同时命中时：若明确是 Android 包文件 → `android-apk`；否则先 `triage`，再按分诊结果进入领域。
+多条件同时命中时优先级：
 
-## 明确不路由（第一批）
+1. 明确是 Android 包文件 → `android-apk`
+2. 明确是 JS/bundle/前端参数链 → `js-reverse`
+3. 明确是已分诊后的原生二进制深度 → `binary-reverse`
+4. 否则先 `triage`，再按分诊结果进入领域
 
-JS 解混淆深度、通用二进制深度、协议深度、CTF/pwn、固件、EDR 绕过、渗透 payload —— 告知「第二批/不收」，可做最小静态说明，不假装有模块。
+`binary-reverse` 假定 triage 结论已有或可在开局快速复核；纯「未知blob」仍先 `triage`。
+
+## 明确不路由
+
+协议深度专项、CTF/pwn 利用编写、固件文件系统专项、EDR 绕过、渗透 payload —— **不收**；告知范围外，可做最小静态说明，不假装有模块。

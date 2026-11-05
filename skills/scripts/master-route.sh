@@ -47,9 +47,16 @@ ROOT="$(resolve_root)" || exit $?
 HINT_LC=$(printf '%s' "$HINT" | tr '[:upper:]' '[:lower:]')
 PRIMARY="skills/triage/"
 REASON="default triage for unknown/general sample"
+# Priority: android-apk > js-reverse > binary-reverse > triage
 if printf '%s' "$HINT_LC" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk'; then
   PRIMARY="skills/android-apk/"
   REASON="Android/APK keywords in hint"
+elif printf '%s' "$HINT_LC" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|bundle\.js|\.mjs'; then
+  PRIMARY="skills/js-reverse/"
+  REASON="JS/deobfuscation/signing keywords in hint"
+elif printf '%s' "$HINT_LC" | grep -Eqi 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制'; then
+  PRIMARY="skills/binary-reverse/"
+  REASON="native binary deep-analysis keywords in hint"
 fi
 
 PRIMARY_ABS="$ROOT/$PRIMARY"
