@@ -1,0 +1,121 @@
+{
+  "version": "0.1.0",
+  "description": "Minimum inputs/outputs/blockers for first-batch phases. Adapted shape from Fausto-404 phase-contracts; contents rewritten for haxsd/reverse-skills.",
+  "path_policy": {
+    "case_root": "work/<case>/",
+    "android_dir_pattern": "work/<case>/android/step{n}/"
+  },
+  "modules": {
+    "triage": {
+      "id": "triage",
+      "minimum_inputs": [
+        "auth.status=granted or offline-sample preset",
+        "sample path"
+      ],
+      "required_outputs": [
+        "work/<case>/triage/triage.md",
+        "work/<case>/triage/hashes.txt"
+      ],
+      "blockers": [
+        "auth not granted",
+        "sample missing",
+        "no usable file/hash tool"
+      ]
+    },
+    "android-apk": {
+      "phases": [
+        {
+          "id": "phase_0_fingerprint",
+          "minimum_inputs": [
+            "granted scope",
+            "apk/xapk/aar/jar path"
+          ],
+          "required_outputs": [
+            "android/step0/fingerprint.md"
+          ],
+          "blockers": [
+            "auth not granted",
+            "archive unreadable"
+          ]
+        },
+        {
+          "id": "phase_1_deps",
+          "minimum_inputs": [
+            "fingerprint says native Java/Kotlin track"
+          ],
+          "required_outputs": [
+            "android/step1/deps.md"
+          ],
+          "blockers": [
+            "jadx missing and user declined install"
+          ]
+        },
+        {
+          "id": "phase_2_decompile",
+          "minimum_inputs": [
+            "jadx available",
+            "step0 not stop-and-switch"
+          ],
+          "required_outputs": [
+            "android/step2/decompile_notes.md",
+            "decompiled tree path"
+          ],
+          "blockers": [
+            "decompiler failed",
+            "split APK undetected wrapper only"
+          ]
+        },
+        {
+          "id": "phase_3_structure",
+          "minimum_inputs": [
+            "decompiled sources or resources"
+          ],
+          "required_outputs": [
+            "android/step3/manifest_summary.md",
+            "android/step3/packages.md"
+          ],
+          "blockers": [
+            "manifest missing"
+          ]
+        },
+        {
+          "id": "phase_4_api",
+          "minimum_inputs": [
+            "step3 packages"
+          ],
+          "required_outputs": [
+            "android/step4/api_inventory.md"
+          ],
+          "blockers": [
+            "no code tree"
+          ]
+        },
+        {
+          "id": "phase_5_callflow",
+          "minimum_inputs": [
+            "api inventory or entry activities"
+          ],
+          "required_outputs": [
+            "android/step5/callflow.md"
+          ],
+          "blockers": [
+            "entry points unknown"
+          ]
+        },
+        {
+          "id": "phase_6_report",
+          "minimum_inputs": [
+            "step0+step3 at minimum"
+          ],
+          "required_outputs": [
+            "android/step6/report.md",
+            "android/step6/findings.json"
+          ],
+          "blockers": [
+            "insufficient prior outputs"
+          ]
+        }
+      ]
+    }
+  }
+}

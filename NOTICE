@@ -1,0 +1,19 @@
+haxsd/reverse-skills
+Copyright 2026 haxsd
+
+This product includes adaptations of methodology from the following Apache-2.0
+licensed works. Full license text for each is available at the upstream URLs
+listed in ATTRIBUTION.md. Redistributions must retain the Apache-2.0 NOTICE
+requirements for those portions.
+
+1. batteryshark/rekit
+   https://github.com/batteryshark/rekit
+   Copyright of original authors and contributors.
+   Adapted: central registry.json shape, safety tier / missing-tool degrade ideas.
+   Not a copy of rekit binaries or skill scripts.
+
+2. SimoneAvogadro/android-reverse-engineering-skill
+   https://github.com/SimoneAvogadro/android-reverse-engineering-skill
+   Copyright of original authors and contributors.
+   Adapted: Android APK fingerprint → decompile → API extract → call-flow playbook shape.
+   Scripts are not vendored; agents use locally installed tools (jadx, apktool, etc.).

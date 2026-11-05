@@ -1,0 +1,77 @@
+{
+  "version": "0.1.0",
+  "skills": {
+    "triage": {
+      "path": "triage",
+      "name": "General triage",
+      "description": "File/binary triage decision tree before deep RE.",
+      "kind": "analyze",
+      "safety": {
+        "tier": 1,
+        "executes_input": "no",
+        "network": "none",
+        "notes": "static inspection only"
+      },
+      "prerequisites": [
+        {
+          "tool": "python3",
+          "check": [
+            "python3",
+            "--version"
+          ],
+          "optional": true
+        },
+        {
+          "tool": "file",
+          "check": [
+            "file",
+            "--version"
+          ],
+          "optional": true
+        }
+      ],
+      "authority": {
+        "actions": [
+          "read_local_target"
+        ],
+        "credential_use": false
+      }
+    },
+    "android-apk": {
+      "path": "android-apk",
+      "name": "Android APK reverse",
+      "description": "APK/XAPK/JAR/AAR fingerprint, decompile, API extract, call-flow.",
+      "kind": "analyze",
+      "safety": {
+        "tier": 2,
+        "executes_input": "no",
+        "network": "none",
+        "notes": "static by default; device/Frida needs separate granted scope"
+      },
+      "prerequisites": [
+        {
+          "tool": "jadx",
+          "check": [
+            "jadx",
+            "--version"
+          ],
+          "optional": false
+        },
+        {
+          "tool": "apktool",
+          "check": [
+            "apktool",
+            "--version"
+          ],
+          "optional": true
+        }
+      ],
+      "authority": {
+        "actions": [
+          "read_local_target"
+        ],
+        "credential_use": false
+      }
+    }
+  }
+}
