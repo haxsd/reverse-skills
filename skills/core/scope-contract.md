@@ -18,6 +18,7 @@ ACT 前必须在分析项目下落地 `work/<case>/scope.md`。无 scope → 只
 - basis: written_contract | bug_bounty_scope | ctf_public | own_system | lab_only
 - evidence_of_auth:
 - MUST NOT proceed if status != granted
+- 检查≠运行/抓包/附加/碰设备账号：获准检查样本不等于获准运行、抓网络、附加进程或触碰设备/账号；这些动作须单独写进 in_scope.activities（离开本地文件还需非 offline 的 network_profile）
 
 ## in_scope
 - assets: []

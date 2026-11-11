@@ -20,7 +20,7 @@ Rules:
 
 ## Question checklist (broad work)
 
-When a request spans several features or subsystems, start by listing questions and the evidence each one needs in `work/<case>/questions.md` (create or complete this file after case-init). Follow the evidence trail; do not declare the investigation complete while required questions are still open.
+When a request spans several features or subsystems, start by listing questions and the evidence each one needs in `work/<case>/questions.md` (create or complete this file after case-init). Follow the evidence trail; do not declare the investigation complete while required questions are still open. `case-init` creates the template; each new entry starts as `status: unanswered`, and before finishing every entry must become exactly one of `answered` / `partially-answered` / `unresolved` (`review_case.py --strict` fails on a missing status or a leftover `unanswered`).
 
 At finish, mark every question with exactly one of:
 

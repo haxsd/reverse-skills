@@ -17,7 +17,7 @@
 
 - 手头已有同一软件的**完整源码仓**，且问题不是「这份发运产物里到底打了什么」时：先用普通方式读源码，不要一上来就走逆向模块。
 - 获准检查样本 ≠ 获准运行、抓流量、附加进程或触碰设备/账号。
-- 覆盖多个功能的任务：先写 `work/<case>/questions.md`，收尾逐条标 `answered` / `partially-answered` / `unresolved`。
+- 覆盖多个功能的任务：先写 `work/<case>/questions.md`，新条目默认 `status: unanswered`，收尾逐条改成 `answered` / `partially-answered` / `unresolved` 之一。
 
 ### 脚本入口
 
