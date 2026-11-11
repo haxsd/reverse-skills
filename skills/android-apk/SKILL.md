@@ -7,12 +7,13 @@ description: Android APK/XAPK/JAR/AAR 静态逆向：指纹、反编译、结构
 
 ## ACTION REQUIRED
 
-1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample` 预设）。
-2. 对样本算哈希并记录（`observed:`）。
-3. **Phase 0 指纹**：若为 Flutter / RN / Cordova / Xamarin / Unity 等，STOP 并切换轨道（本模块不深挖）。
-4. 校验工具：`jadx` 必需；`apktool` / `java` 建议。缺失则诚实降级，不编造输出。
-5. 按 Phase 1→6 推进；产物落到 `work/<case>/android/stepN/`。
-6. 动态 Hook / 真机 / 重打包安装另需明确授权与 `network_profile`；默认只做静态。
+1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample` 预设）。获准检查这份 APK，不等于获准安装运行、抓流量、附加到设备或触碰账号。
+2. 若手头已有同一应用的**完整源码仓**，且问题不是针对这份发运包，先读源码，不要一上来走本模块。
+3. 对样本算哈希并记录（`observed:`）。
+4. **Phase 0 指纹**：若为 Flutter / RN / Cordova / Xamarin / Unity 等，STOP 并切换轨道（本模块不深挖）。
+5. 校验工具：`jadx` 必需；`apktool` / `java` 建议。缺失则诚实降级，不编造输出。
+6. 按 Phase 1→6 推进；产物落到 `work/<case>/android/stepN/`。
+7. 动态 Hook / 真机 / 重打包安装另需明确授权与 `network_profile`；默认只做静态。静态阅读不能写成「已观察到执行」。
 
 契约字段见 `../core/phase-contracts.json`。证据标签见 `../core/evidence-labels.md`。
 
@@ -21,7 +22,7 @@ description: Android APK/XAPK/JAR/AAR 静态逆向：指纹、反编译、结构
 | 动作 | 要求 |
 |---|---|
 | 本地解包 / jadx / 读 Manifest / 字符串与 API 面梳理 | `granted` + 通常 `offline` |
-| adb / Frida / 安装重打包包 / 打真实服务器 | `granted` + 非 offline 的明确网络档 + in_scope 覆盖 |
+| adb / Frida / 安装重打包包 / 打真实服务器 | `granted` + 非 offline 的明确网络档 + `in_scope.activities` 写明运行、附加或联网 |
 
 禁止：未授权对第三方应用商店账号、用户设备或生产 API 的攻击性操作；本模块不提供 exploit 构造。
 
@@ -141,8 +142,9 @@ jadx -d work\<case>\android\step2\jadx-out --deobf $env:APK
 6. JNI / `.so` 备注（若有）  
 7. 未知与下一步（其它模块 / 人工）  
 8. Findings 列表：每条带 severity（info 亦可）与 evidence ids  
+9. 若用了 `work/<case>/questions.md`：逐条标 `answered` / `partially-answered` / `unresolved`；有界检索不得写成「不存在」
 
-`step6/findings.json` 可用简易数组：`[{id,title,severity,evidence,location}]`。
+`step6/findings.json` 可用简易数组：`[{id,title,severity,evidence,location}]`。静态结论不能写成已观察到的运行行为。
 
 ## 缺工具降级
 

@@ -7,12 +7,13 @@ description: 授权范围内的通用 ELF/PE/Mach-O 深度逆向：格式确认�
 
 ## ACTION REQUIRED
 
-1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample`）。
-2. **先完成或复核 `triage`**：容器、架构、加壳/混淆态、符号面未定时，不要跳进反编译。
-3. 对样本算哈希并记录（`observed:`）。
-4. 按 Phase 0→5 推进；产物落到 `work/<case>/binary/`。
-5. 工具链按「有什么用什么」；缺失则诚实降级，不编造伪代码。
-6. 动态调试 / 仿真执行另需明确授权；默认静态。
+1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample`）。获准检查这份二进制，不等于获准运行它、抓流量、附加调试器或触碰设备/账号。
+2. 若手头已有同一软件的**完整源码仓**，且问题不是针对这份发运产物，先读源码，不要一上来走本模块。
+3. **先完成或复核 `triage`**：容器、架构、加壳/混淆态、符号面，以及打包运行时的**真正应用层**未定时，不要跳进反编译。
+4. 对样本算哈希并记录（`observed:`）。
+5. 按 Phase 0→5 推进；产物落到 `work/<case>/binary/`。
+6. 工具链按「有什么用什么」；缺失则诚实降级，不编造伪代码。
+7. 动态调试 / 仿真执行另需明确授权；默认静态。静态阅读不能写成「已观察到执行」。
 
 契约见 `../core/phase-contracts.json`。证据标签见 `../core/evidence-labels.md`。授权总则见仓根 `RULES.md` / `RULES_zh.md`。
 
@@ -20,8 +21,8 @@ description: 授权范围内的通用 ELF/PE/Mach-O 深度逆向：格式确认�
 
 | 动作 | 要求 |
 |---|---|
-| 本地静态：读头、strings、导入导出、反汇编/反编译 | `granted` + 通常 `offline` |
-| 调试器附加、用户态仿真、对远程主机投递 | `granted` + 明确网络/调试档 + in_scope |
+| 本地静态：读头、strings、导入导出、反汇编/反编译、只读查看打包归档 | `granted` + 通常 `offline` |
+| 调试器附加、用户态仿真、运行样本、抓流量、对远程主机投递 | `granted` + 明确网络/调试档 + `in_scope.activities` 写明对应动作 |
 | 未授权目标上的利用编写、提权、防护绕过 | **禁止** |
 
 本模块是**分析剧本**，不是 exploit 手册；不收 EDR 绕过或 payload 模块。
@@ -52,7 +53,19 @@ work/<case>/binary/
 
 加壳态为 `packed`：本模块先做表面与入口 stub 记录，脱壳策略单列；未脱壳前的「业务伪代码」标 `proposed:` 且置信度低。
 
-写入 `step0/format.md`（可粘贴 triage 摘要 + 哈希）。
+### 0.1 打包运行时：不要对着外壳做业务分析
+
+若 triage 已标出打包形态，先确认应用层，再决定是否继续在本模块做原生深度。
+
+| 形态 | 不要当成产品代码的部分 | 应该分析的部分 | 注意 |
+|---|---|---|---|
+| PyInstaller | 引导程序（原生前缀） | **CArchive** 及其中的 PYZ/字节码与资源 | 抽出后对内部成员重新分诊；Python 字节码不是本模块的原生深度对象 |
+| Bun `--compile` | Bun 运行时前缀 | 嵌入的**模块图**（JS） | 抽出后转 `js-reverse` |
+| Deno `compile` | Deno 运行时前缀 | 嵌入的**虚拟文件系统** | 抽出后对其中的 JS 转 `js-reverse`。不要靠擅自运行可执行文件来导出文件树 |
+| .NET NativeAOT | 「按普通托管程序集打开」这条路 | 映像里的**原生机器码** | 普通 CIL 反编译器还原不了方法体；元数据恢复有限，还原的类型/伪代码不是原始 C# 源码。按本模块原生路径推进 |
+| Go 二进制 | — | 仍是这份原生映像 | 先读 buildinfo / 模块元数据（有 `go` 可用 `go version -m`）。**元数据缺失不能证明它不是 Go**，只能记「未观察到 buildinfo」。随后按常规原生分析 |
+
+写入 `step0/format.md`（可粘贴 triage 摘要 + 哈希 + App layer）。
 
 ## Phase 1 — 字符串与导入/导出面
 
@@ -141,9 +154,17 @@ Get-FileHash $env:BIN -Algorithm SHA256
 | 壳样本当已还原业务 | 标明 stub / 需脱壳 |
 | 缺工具仍输出完整算法 | 降级 + `TBD` |
 | Fat Mach-O 未拆 slice | 先选对架构切片 |
-| .NET/PE 当原生深挖 | 转托管工具链（本模块仅点到为止） |
+| .NET/PE 当原生深挖 | 先区分普通托管程序集与 NativeAOT；前者转托管工具链，后者按原生路径并写明元数据限制 |
+| 把 PyInstaller/Bun/Deno 的运行时前缀当成产品 | 先回到应用层（CArchive / 模块图 / 嵌入式虚拟文件系统） |
+| 没看到 Go buildinfo 就断言「不是 Go」 | 记「未观察到元数据」，不能当成否定证明 |
+| 把静态反编译写成已观察到的运行行为 | 运行/附加须另有授权，并单独取证 |
 
 ## 与其它模块
 
-- 入口：`triage` → 本模块；Android 包 → `android-apk`；JS/bundle → `js-reverse`。
+- 入口：`triage` → 本模块；Android 包 → `android-apk`；JS/bundle、Electron/ASAR、以及从 Bun/Deno 抽出的 JS → `js-reverse`。
 - APK 内 `.so`：Java 面在 `android-apk`，原生库可对本模块对单个 `.so` 建子案或同案 `binary/` 子目录。
+- 大任务维护 `work/<case>/questions.md`；有界检索的否定结论不得写成「不存在」。
+
+## 归属说明 / Attribution
+
+「先找真正应用层」、Go 元数据缺失不能直接否定、NativeAOT 按原生分析且元数据有限等思路，改写自 morluto/rea（MIT，钉住提交见 [`ATTRIBUTION.md`](../../ATTRIBUTION.md)）。本文件为改写，不绑定其工具名。

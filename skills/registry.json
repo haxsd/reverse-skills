@@ -1,10 +1,10 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "skills": {
     "triage": {
       "path": "triage",
       "name": "General triage",
-      "description": "File/binary triage decision tree before deep RE.",
+      "description": "File/binary triage decision tree before deep RE; identify the real application layer in packaged runtimes.",
       "kind": "analyze",
       "safety": {
         "tier": 1,
@@ -60,13 +60,13 @@
     "js-reverse": {
       "path": "js-reverse",
       "name": "JavaScript reverse",
-      "description": "JS deobfuscation tiers, AST/static path, dynamic hook boundary, signing/crypto-param chain.",
+      "description": "JS deobfuscation tiers, AST/static path, dynamic hook boundary, signing/crypto-param chain, and desktop Electron/ASAR.",
       "kind": "analyze",
       "safety": {
         "tier": 2,
         "executes_input": "sandbox-decoder-only",
         "network": "none-by-default",
-        "notes": "static first; browser/CDP needs granted non-offline scope; no whole-program unsandboxed eval"
+        "notes": "static first; check Electron fuses before --inspect; browser/CDP/inspect needs granted non-offline scope; no whole-program unsandboxed eval"
       },
       "prerequisites": [
         {
@@ -88,7 +88,7 @@
     "binary-reverse": {
       "path": "binary-reverse",
       "name": "Native binary reverse",
-      "description": "ELF/PE/Mach-O deep path after triage: surface, tool choice, disasm/decompile with honest degrade.",
+      "description": "ELF/PE/Mach-O deep path after triage: surface, tool choice, disasm/decompile with honest degrade; packaged runtimes go to the real application layer first.",
       "kind": "analyze",
       "safety": {
         "tier": 2,

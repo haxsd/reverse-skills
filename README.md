@@ -3,7 +3,7 @@
 **逆向工程 agent 技能包（精简）**：授权门禁 + 路由 + 分诊 + Android/APK + JS + 通用二进制深度。
 
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.2.0-informational)](VERSION)
+[![version](https://img.shields.io/badge/version-0.3.0-informational)](VERSION)
 
 与 [toolkit-map](https://github.com/haxsd/toolkit-map) 一样独立维护；[agent-skills](https://github.com/haxsd/agent-skills) 里的 `reverse-skill` 只做路由入口，链到本仓。
 
@@ -27,16 +27,20 @@ $env:REVERSE_SKILL_ROOT = "$env:USERPROFILE\tools\reverse-skills"
 4. 工具：`skills/scripts/check-tools.* --skill <id>`（对照 `registry.json`，缺工具明确降级）
 5. 打开 PRIMARY：`skills/triage/` · `skills/android-apk/` · `skills/js-reverse/` · `skills/binary-reverse/`
 
+手头有完整源码仓时，先用普通方式读源码，不要一上来就走逆向工具。大任务先在 `work/<case>/questions.md` 列问题，收尾逐条标已回答 / 部分回答 / 未解决。
+
 ## 模块
 
 | id | 用途 |
 |---|---|
-| `triage` | 通用文件/二进制分诊决策树 |
+| `triage` | 通用文件/二进制分诊决策树；打包运行时先找出真正的应用层 |
 | `android-apk` | APK/XAPK/JAR/AAR 指纹→反编译→API/调用链 |
-| `js-reverse` | JS 混淆分档、静态/AST、动态边界、签名与参数链 |
+| `js-reverse` | JS 混淆分档、静态/AST、动态边界、签名与参数链；桌面 Electron/ASAR |
 | `binary-reverse` | ELF/PE/Mach-O 深度：表面→工具选择→反汇编/反编译（诚实降级） |
 
 不含 pentest payload、EDR 绕过。协议/CTF/固件专项未收录。
+
+本机若已安装 [REA](https://github.com/morluto/rea)（`npx rea-agents`），可把它当作当前路线的可选执行后端；没装就按本仓自己的方法走。不强制、不内嵌。
 
 ## 许可证
 

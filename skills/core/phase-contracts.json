@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "description": "Minimum inputs/outputs/blockers for first-batch phases. Adapted shape from Fausto-404 phase-contracts; contents rewritten for haxsd/reverse-skills.",
+  "version": "0.3.0",
+  "description": "Minimum inputs/outputs/blockers for current pack phases. Adapted shape from Fausto-404 phase-contracts; contents rewritten for haxsd/reverse-skills.",
   "path_policy": {
     "case_root": "work/<case>/",
     "android_dir_pattern": "work/<case>/android/step{n}/"
@@ -19,7 +19,8 @@
       "blockers": [
         "auth not granted",
         "sample missing",
-        "no usable file/hash tool"
+        "no usable file/hash tool",
+        "packaged runtime recognized but application layer not identified"
       ]
     },
     "android-apk": {
@@ -115,6 +116,39 @@
             "insufficient prior outputs"
           ]
         }
+      ]
+    },
+    "js-reverse": {
+      "id": "js-reverse",
+      "minimum_inputs": [
+        "auth.status=granted or offline-sample preset",
+        "script, bundle, ASAR, or extracted Electron/JS tree"
+      ],
+      "required_outputs": [
+        "work/<case>/js/step0/tier.md",
+        "work/<case>/js/step5/report.md"
+      ],
+      "blockers": [
+        "auth not granted",
+        "sample missing",
+        "Electron inspect attempted without checking fuses or without runtime activity in scope"
+      ]
+    },
+    "binary-reverse": {
+      "id": "binary-reverse",
+      "minimum_inputs": [
+        "auth.status=granted or offline-sample preset",
+        "triage complete or quickly rechecked",
+        "ELF/PE/Mach-O sample (or extracted native image)"
+      ],
+      "required_outputs": [
+        "work/<case>/binary/step0/format.md",
+        "work/<case>/binary/step5/report.md"
+      ],
+      "blockers": [
+        "auth not granted",
+        "sample missing",
+        "packaged runtime still on bootloader/prefix; application layer not extracted"
       ]
     }
   }

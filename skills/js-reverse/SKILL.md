@@ -7,12 +7,13 @@ description: 授权范围内的前端/Node JS 逆向：混淆分档、静态美�
 
 ## ACTION REQUIRED
 
-1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample`）。
-2. 对输入脚本/bundle 算哈希并记录（`observed:`）。
-3. **Phase 0 分档**：判定混淆层级与输入形态，再选静态或动态路径。
-4. 校验工具：`node` 建议；美化/AST 工具按表探测。缺失则诚实降级，不编造还原结果。
-5. 按 Phase 1→5 推进；产物落到 `work/<case>/js/`。
-6. 浏览器 Hook / 对真实站点采样另需明确授权与 `network_profile`；默认优先离线静态。
+1. 确认 `work/<case>/scope.md`：`auth.status=granted`（本地样本可用 `offline-sample`）。获准检查脚本/安装包，不等于获准运行应用、开调试口、抓流量或触碰账号。
+2. 若手头已有同一应用的**完整源码仓**，且问题不是「这份发运包里打了什么」，先读源码，不要一上来走本模块。
+3. 对输入脚本/bundle/asar 算哈希并记录（`observed:`）。桌面 Electron 先定位 `app.asar` 或已解出的应用树。
+4. **Phase 0 分档**：判定混淆层级与输入形态，再选静态或动态路径。
+5. 校验工具：`node` 建议；美化/AST 工具按表探测。缺失则诚实降级，不编造还原结果。
+6. 按 Phase 1→5 推进；产物落到 `work/<case>/js/`。
+7. 浏览器 Hook / `--inspect` / 对真实站点采样另需明确授权与 `network_profile`；默认优先离线静态。尝试 `--inspect` 之前必须先检查 Electron 熔断（见下方桌面路线）。
 
 契约见 `../core/phase-contracts.json`。证据标签见 `../core/evidence-labels.md`。授权总则见仓根 `RULES.md` / `RULES_zh.md`。
 
@@ -20,8 +21,8 @@ description: 授权范围内的前端/Node JS 逆向：混淆分档、静态美�
 
 | 动作 | 要求 |
 |---|---|
-| 本地读脚本、美化、AST 变换、字符串数组还原、bundle 拆分 | `granted` + 通常 `offline` |
-| 对授权目标页做 DevTools/CDP 观察、最小化 Hook、抓发起链 | `granted` + 非 offline 的明确网络档 + in_scope 覆盖 |
+| 本地读脚本、美化、AST 变换、字符串数组还原、bundle 拆分、只读查看 `app.asar` / 已解出的应用树、静态查看 Electron 熔断 | `granted` + 通常 `offline` |
+| 对授权目标页做 DevTools/CDP 观察、最小化 Hook、抓发起链；启动应用并加 `--inspect` / 附加到已运行进程 | `granted` + 非 offline 的明确网络档（若会联网）+ `in_scope.activities` 写明运行或附加 |
 | 对未授权站点批量探测、绕过风控/登录、投递利用载荷 | **禁止** |
 
 本模块产出**决策树与证据化步骤**，不提供 payload 字典、未授权绕过脚本或 EDR 规避。
@@ -54,6 +55,15 @@ work/<case>/js/
 | Sourcemap 可用 | `.map` 旁路或 `sourceMappingURL` | **优先**还原源；再谈去混淆 |
 | JSVMP / 自定义字节码 | 大 switch 分发、opcode 表、解释器循环 | STOP 本流水线深度；记录证据，另开 VMP 轨道（本批不深挖） |
 | 页面内联 + 多 chunk | HTML 引用多个 script | 先建依赖图，再定主链 |
+| 桌面 Electron / ASAR | `app.asar`、`app.asar.unpacked`、已解出的 `app/` 树，或安装目录 `Resources/app.asar` | 先走下方「桌面 Electron / ASAR」路线，再按抽出的 JS 分档 |
+
+### 0.1-b 桌面 Electron / ASAR
+
+桌面套壳里，**真正的应用层是 asar（或已解出的 JS 树）**，Electron 可执行文件只是运行时。
+
+1. **定位应用层**：在安装目录或 `.app` 包里找 `app.asar`、并列的 `app.asar.unpacked`，或已经解出的源树。记录路径与哈希（`observed:`）。有本地 asar 解包工具再用；没有就只读清单/头部能读到的部分，并写 `TBD (tool-missing)`。
+2. **先检查熔断，再谈调试。** 若计划使用 `--inspect`、`--inspect-brk` 或远程调试，先检查**运行时二进制**（不是只看 asar）上的 Electron fuses。关键项是 `EnableNodeCliInspectArguments`：它若被关掉，进程会**忽略** `--inspect` 一类参数，再反复加这个开关也没有用。本机若有熔断查看工具（例如 `@electron/fuses`）就用它；没有则只记录已观察到的熔断线索，或写 `TBD (tool-missing)`，不要臆造熔断状态。查看熔断属于静态检查；真正启动并附加仍须单独授权。本模块不讨论如何绕过已关闭的熔断。
+3. 抽出（或已解出）的 JS 按本模块 Phase 0.2 起的分档继续。原生 `.node` / 辅助进程里的原生代码转 `binary-reverse`。
 
 ### 0.2 混淆层级（由浅到深）
 
@@ -147,9 +157,19 @@ L4 → 识别后 STOP，列证据，不假装已还原
 | 动态 Hook 后不回静态核对 | 每个运行时地址映射回文件 |
 | 缺工具仍输出「已还原算法」 | `TBD (tool-missing)` + 已见证据 |
 | 把本模块当渗透 payload 库 | 拒绝；回 `RULES` |
+| 没找 asar 就对 Electron 运行时做 JS 逆向 | 先定位 `app.asar` / 已解出的应用树 |
+| 未查熔断就反复加 `--inspect` | 先看 `EnableNodeCliInspectArguments`；关掉则该开关无效 |
+| 把静态阅读写成「已观察到运行时行为」 | 运行/附加须另有授权，并单独取证 |
+| 有完整源码仓却先拆安装包 | 问题若不针对发运产物，先读源码 |
 
 ## 与其它模块
 
-- 未知文件先 `triage`；确认是 JS/bundle 再进本模块。
+- 未知文件先 `triage`；确认是 JS/bundle，或已定位到 Electron/ASAR 应用层，再进本模块。
 - APK 内 `index.android.bundle` / Hermes：Android 指纹后可转来，但 Hermes 字节码需另轨（本批只处理可读 JS 文本）。
 - 原生 `.so` / PE 内嵌脚本：脚本走本模块，原生壳走 `binary-reverse`。
+- 从 PyInstaller 抽出的前端资源、或从 Bun `--compile` / Deno `compile` 抽出的 JS 模块，也走本模块。
+- 大任务维护 `work/<case>/questions.md`；有界检索的否定结论不得写成「不存在」。
+
+## 归属说明 / Attribution
+
+桌面 Electron 先查熔断再谈 `--inspect` 的顺序，改写自 morluto/rea（MIT，钉住提交见 [`ATTRIBUTION.md`](../../ATTRIBUTION.md)）。本文件为改写，不绑定其工具名。

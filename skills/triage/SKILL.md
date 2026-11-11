@@ -22,6 +22,8 @@ description: 通用文件/二进制分诊——先判定容器、架构、工具
 - 禁止对未授权目标做网络探测或批量枚举。
 - 禁止编写/输出规避终端防护、提权、载荷投递类内容。
 - 分诊只产出**结构与证据**，不产出利用代码。
+- 若手头已有同一软件的**完整源码仓库**，且问题不是针对这份发运产物本身，先用普通方式读源码，不要一上来走本分诊的深度路径。
+- 获准检查本样本，不等于获准运行它、抓流量、附加进程或触碰设备/账号；那些动作要另写进 `in_scope.activities`。静态阅读不能写成「已观察到执行」。
 
 ---
 
@@ -54,6 +56,23 @@ description: 通用文件/二进制分诊——先判定容器、架构、工具
 - 脚本（`#!`）→ 直接读源码，不走二进制路径。
 
 > 出口条件：容器类型 + 内部成员清单已记录（`observed:`）。
+
+### 1.1-b 打包运行时：先找到真正的应用层
+
+外壳（引导程序、运行时前缀、安装壳）往往不是产品代码。先判断「真正的应用层在哪」，再决定交给 `js-reverse` 还是 `binary-reverse`，不要对着启动壳做深度反编译。
+
+| 形态 | 应用层在哪 | 外壳是什么 | 下一步 |
+|---|---|---|---|
+| 桌面 Electron / ASAR | `app.asar`、已解出的应用树，或 `app.asar.unpacked` | Electron 运行时可执行文件 | 记下 asar/目录位置，转入 `js-reverse`。若还要尝试 `--inspect`，先做熔断检查（见该模块），且运行/附加必须另有授权 |
+| PyInstaller | **CArchive**（及其中的 PYZ/字节码与资源）才是应用 | 引导程序只是原生前缀 | 有本地解包工具则抽出归档再对内部成员递归分诊；不要把引导程序当成产品本身 |
+| Bun `--compile` | 嵌入的**模块图**（JS 模块） | Bun 运行时前缀 | 抽出模块后按 JS 走 `js-reverse`；不要对运行时前缀做业务级反编译 |
+| Deno `compile` | 嵌入的**虚拟文件系统** | Deno 运行时前缀 | 抽出其中的文件，兼容的 JS 交 `js-reverse`；不要靠擅自运行可执行文件来「倒出」文件树（运行须另有授权） |
+| .NET NativeAOT | 就是这份原生机器码（PE/ELF/Mach-O） | 不是普通托管程序集 | 普通 CIL 反编译器还原不了方法体；转入 `binary-reverse`，元数据恢复能力有限，还原结果不是原始 C# 源码 |
+| Go 二进制 | 仍是这份原生映像 | — | 先看 buildinfo / 模块元数据（本机有 `go` 就可用 `go version -m`）；**没有元数据不能证明它不是 Go**。然后按原生路径进入 `binary-reverse` |
+
+识别依据只写 `observed:`（段名、归档魔术、清单、工具输出）。工具缺失则记录 `TBD (tool-missing)`，不编造「已经抽出应用层」。
+
+> 出口条件：若判定为上表形态，必须写明「应用层 / 外壳」；尚未定位应用层时，不得进入深度业务推断。
 
 ### 1.2 arch（架构与字节序）
 - 从头部字段取：ELF `e_machine`/`EI_DATA`；PE `Machine`；Mach-O `cputype`/`cpusubtype`。
@@ -190,9 +209,11 @@ $out | Select-Object -First 200
 ```
 Auth:         granted / offline-sample        (授权方/文书号：…)
 Container:    ELF64 / PE64 / Mach-O / Jar / .NET / ASAR / pyc / WASM / other
+Packaged:     none / electron-asar / pyinstaller / bun-compile / deno-compile / nativeaot / go / other
+App layer:    <path or archive member / TBD (not yet located)>
 Arch:         x86_64 / ARM64 / MIPS / RISC-V / MSIL / JVM / WASM
 Toolchain:    <family + version 或 TBD (unverified)>
-Runtime:      <libc / .NET / Node / Android 版本 或 TBD>
+Runtime:      <libc / .NET / Node / Electron / Bun / Deno / Android 版本 或 TBD>
 Packing:      none / packed / obfuscated-in-place     (熵表：…)
 Obfuscation:  none / 平坦化 / 字符串加密 / 反调试      [observed|inferred]
 Symbols:      full / partial / stripped               (残留：…)
@@ -216,10 +237,12 @@ Blocked:      <缺失工具或不可读区域，写 TBD (blocked: …)>
 
 - 证据标签定义：[`../core/evidence-labels.md`](../core/evidence-labels.md)
 - 本 SKILL 只输出“是什么”，**不输出**脱壳步骤、补丁字节、利用路径。
-- 分诊表完成后，按 `Packing` / `Toolchain` 字段选择后续路径；选择理由写进报告。
+- 分诊表完成后，按 `Packing` / `Packaged` / `App layer` / `Toolchain` 字段选择后续路径；选择理由写进报告。
+- Electron/ASAR、以及从 Bun/Deno 抽出的 JS → `js-reverse`。NativeAOT、Go、以及已确认的原生映像 → `binary-reverse`。
+- 覆盖多个子系统的任务：同步维护 `work/<case>/questions.md`，收尾逐条标 `answered` / `partially-answered` / `unresolved`。在限定范围里没找到，只能写「在范围 X 内未找到」。
 
 ---
 
 ## 归属说明 / Attribution
 
-本 SKILL 的方法论结构参考并改写了 PyModel 项目的分诊流程，该项目以 MIT 许可证发布；本文件为改写版本，未逐字复制原文。完整归属与许可证信息见仓库根目录 [`ATTRIBUTION.md`](../../ATTRIBUTION.md)。
+本 SKILL 的方法论结构参考并改写了 PyModel 项目的分诊流程，该项目以 MIT 许可证发布；「先找真正应用层」等打包运行时思路改写自 morluto/rea（MIT，钉住提交见 [`ATTRIBUTION.md`](../../ATTRIBUTION.md)）。本文件为改写版本，未逐字复制原文，也不绑定其工具名。完整归属与许可证信息见仓库根目录 [`ATTRIBUTION.md`](../../ATTRIBUTION.md)。
