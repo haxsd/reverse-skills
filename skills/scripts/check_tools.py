@@ -90,6 +90,11 @@ def main(argv: list[str] | None = None) -> int:
                 any_missing_optional = True
                 print(f"DEGRADE_OPTIONAL={sid}:{tool}")
 
+    # Optional REA backend (MASTER-ROUTING «可选执行后端»): never a dependency, never affects exit code.
+    rea_hits = [f"{name}={shutil.which(name)}" for name in ("rea", "rea-agents") if shutil.which(name)]
+    if rea_hits:
+        print(f"NOTE=optional REA detected ({', '.join(rea_hits)}); may be used as optional execution backend, not required")
+
     if missing_required:
         for m in missing_required:
             print(f"MISSING_REQUIRED={m}")

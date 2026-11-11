@@ -36,19 +36,26 @@ function Resolve-SkillRoot {
 }
 
 
-function Get-PrimaryFromHint([string]$HintText) {
-  # Priority: android-apk > js-reverse > binary-reverse > triage (aligned with MASTER-ROUTING / master-route)
+function Get-RouteFromHint([string]$RulesPath, [string]$HintText) {
+  # Shared rules: skills/scripts/route-rules.tsv (same file as master-route.* / case-init.sh).
+  # Priority: android > js (incl. Electron/ASAR) > packaged runtime → triage first > binary > default triage
+  # Returns @(PRIMARY, REASON); first matching rule wins, case-insensitive (-match).
+  if (-not (Test-Path -LiteralPath $RulesPath -PathType Leaf)) {
+    Write-Error "routing rules missing: $RulesPath"
+    exit 2
+  }
   $h = $HintText.ToLowerInvariant()
-  if ($h -match 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk') {
-    return 'skills/android-apk/'
+  foreach ($line in [IO.File]::ReadAllLines($RulesPath, [Text.Encoding]::UTF8)) {
+    if (-not $line -or $line.StartsWith('#')) { continue }
+    $parts = $line.Split("`t", 3)
+    if ($parts.Count -lt 3 -or -not $parts[2]) { continue }
+    if ($h -match $parts[2]) { return @($parts[0], $parts[1]) }
   }
-  if ($h -match 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs') {
-    return 'skills/js-reverse/'
-  }
-  if ($h -match 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制') {
-    return 'skills/binary-reverse/'
-  }
-  return 'skills/triage/'
+  return @('skills/triage/', 'default triage for unknown/general sample')
+}
+
+function Get-PrimaryFromHint([string]$RulesPath, [string]$HintText) {
+  return (Get-RouteFromHint $RulesPath $HintText)[0]
 }
 
 function Write-Utf8NoBom([string]$Path, [string]$Content) {
@@ -62,7 +69,7 @@ if (-not $Hint -or -not $CaseName) {
 }
 
 $Root = Resolve-SkillRoot
-$primary = Get-PrimaryFromHint $Hint
+$primary = Get-PrimaryFromHint (Join-Path $Root 'skills/scripts/route-rules.tsv') $Hint
 $primaryAbs = Join-Path $Root ($primary -replace '/', [IO.Path]::DirectorySeparatorChar)
 if (-not $primaryAbs.EndsWith([IO.Path]::DirectorySeparatorChar)) {
   $primaryAbs = $primaryAbs + [IO.Path]::DirectorySeparatorChar
@@ -139,6 +146,7 @@ $scope = @(
   "- basis: $basis",
   "- evidence_of_auth: $evidence",
   "- MUST NOT proceed if status != granted",
+  "- 检查≠运行/抓包/附加/碰设备账号：获准检查样本不等于获准运行、抓网络、附加进程或触碰设备/账号；这些动作须单独写进 in_scope.activities（离开本地文件还需非 offline 的 network_profile）",
   "",
   "## in_scope",
   "- assets:"
@@ -158,12 +166,35 @@ $scope += $nl + (@(
   "",
   "## deliverables",
   "- report: true",
-  "- timeline: true"
+  "- timeline: true",
+  "- questions: true"
 ) -join $nl)
 # Ensure trailing newline
 if (-not $scope.EndsWith($nl)) { $scope += $nl }
 
 Write-Utf8NoBom -Path (Join-Path $caseDir "scope.md") -Content $scope
+
+# questions.md template (kept if it already exists — it holds case work)
+$questionsPath = Join-Path $caseDir "questions.md"
+if (-not (Test-Path -LiteralPath $questionsPath -PathType Leaf)) {
+  $questions = (@(
+    '# Questions',
+    '',
+    '<!--',
+    '大任务（覆盖多个功能或子系统）先在这里列问题，以及每条需要什么证据；见 skills/core/evidence-labels.md。',
+    '每条一个 "## Q<n>: <问题>" 小节，新条目默认 status: unanswered。',
+    '收尾时每条必须改成且只能是其一：answered（已回答） / partially-answered（部分回答） / unresolved（未解决）。',
+    '有界否定写成「在范围 X 内未找到」，不能写成「不存在」。review_case.py 会核对状态（--strict 时缺状态或仍为 unanswered 判失败）。',
+    '',
+    '示例：',
+    '## Q1: <问题>',
+    '- evidence_needed: <需要什么证据>',
+    '- status: unanswered',
+    '- answer: <结论 + 证据标签，或有界否定>',
+    '-->'
+  ) -join $nl) + $nl
+  Write-Utf8NoBom -Path $questionsPath -Content $questions
+}
 
 $ready = ($authStatus -eq "granted")
 Write-Output "ROOT=$Root"

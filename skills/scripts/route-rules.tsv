@@ -1,0 +1,9 @@
+# Shared hint → PRIMARY routing rules for master-route.{sh,ps1} and case-init.{sh,ps1}.
+# Single source of truth: edit here only; bash (grep -Ei) and pwsh (-match, case-insensitive) read the same file.
+# Format: PRIMARY<TAB>REASON<TAB>REGEX  — first matching line wins; no match → skills/triage/ (default).
+# Priority: android > js (incl. Electron/ASAR) > packaged runtime → triage first > binary > default triage
+# Keep regex to the common subset of GNU ERE and .NET (alternation, \b, \s, ?, escaped dots). No REA tool-name routing.
+skills/android-apk/	Android/APK keywords in hint	apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk
+skills/js-reverse/	JS/deobfuscation/signing or desktop Electron/ASAR keywords in hint	javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs|electron|\basar\b|app\.asar
+skills/triage/	packaged runtime (PyInstaller/Bun/Deno): 先找真正应用层, then js-reverse or binary-reverse	pyinstaller|carchive|bun\s+--?compile|deno\s+compile
+skills/binary-reverse/	native binary deep-analysis keywords in hint	ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制|nativeaot|\bgo\s*binary|\bgo\s*二进制|buildinfo

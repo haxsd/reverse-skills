@@ -43,7 +43,9 @@ pwsh -NoProfile -File "$env:REVERSE_SKILL_ROOT\skills\scripts\check-tools.ps1" -
 python "$env:REVERSE_SKILL_ROOT\skills\case-review\scripts\review_case.py" work/<case>
 ```
 
-`check-tools` 读 `skills/registry.json`：缺**必需**工具时 exit 1 并打印 `MISSING_REQUIRED=` / `DEGRADED=true`（不 silent）；可选工具缺失只标 `DEGRADE_OPTIONAL=`。
+`check-tools` 读 `skills/registry.json`：缺**必需**工具时 exit 1 并打印 `MISSING_REQUIRED=` / `DEGRADED=true`（不 silent）；可选工具缺失只标 `DEGRADE_OPTIONAL=`。本机 PATH 上已有 `rea` / `rea-agents` 时只多打一条 `NOTE=optional REA detected …`，不算依赖、不影响退出码。
+
+下面路由表的关键词由 `skills/scripts/route-rules.tsv` 统一维护，`master-route.*` 与 `case-init.*`（bash / pwsh）共用这一份；改路由只改这个文件。`case-init` 同时生成 `work/<case>/questions.md` 模板（已存在则不覆盖），`review_case.py` 核对其中每条的状态：缺状态或仍为 `unanswered` 时警告，`--strict` 时判失败。
 
 ## 路由表
 

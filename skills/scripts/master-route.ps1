@@ -28,26 +28,33 @@ function Resolve-SkillRoot {
   exit 2
 }
 
+function Get-RouteFromHint([string]$RulesPath, [string]$HintText) {
+  # Shared rules: skills/scripts/route-rules.tsv (same file as master-route.* / case-init.sh).
+  # Priority: android > js (incl. Electron/ASAR) > packaged runtime → triage first > binary > default triage
+  # Returns @(PRIMARY, REASON); first matching rule wins, case-insensitive (-match).
+  if (-not (Test-Path -LiteralPath $RulesPath -PathType Leaf)) {
+    Write-Error "routing rules missing: $RulesPath"
+    exit 2
+  }
+  $h = $HintText.ToLowerInvariant()
+  foreach ($line in [IO.File]::ReadAllLines($RulesPath, [Text.Encoding]::UTF8)) {
+    if (-not $line -or $line.StartsWith('#')) { continue }
+    $parts = $line.Split("`t", 3)
+    if ($parts.Count -lt 3 -or -not $parts[2]) { continue }
+    if ($h -match $parts[2]) { return @($parts[0], $parts[1]) }
+  }
+  return @('skills/triage/', 'default triage for unknown/general sample')
+}
+
 if (-not $Hint) {
   Write-Error "Usage: master-route.ps1 -Hint <task>"
   exit 2
 }
 
 $Root = Resolve-SkillRoot
-$h = $Hint.ToLowerInvariant()
-$primary = "skills/triage/"
-$reason = "default triage for unknown/general sample"
-# Priority: android-apk > js-reverse > binary-reverse > triage
-if ($h -match 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk') {
-  $primary = "skills/android-apk/"
-  $reason = "Android/APK keywords in hint"
-} elseif ($h -match 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs') {
-  $primary = "skills/js-reverse/"
-  $reason = "JS/deobfuscation/signing keywords in hint"
-} elseif ($h -match 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制') {
-  $primary = "skills/binary-reverse/"
-  $reason = "native binary deep-analysis keywords in hint"
-}
+$route = Get-RouteFromHint (Join-Path $Root 'skills/scripts/route-rules.tsv') $Hint
+$primary = $route[0]
+$reason = $route[1]
 
 $primaryAbs = Join-Path $Root ($primary -replace '/', [IO.Path]::DirectorySeparatorChar)
 if (-not $primaryAbs.EndsWith([IO.Path]::DirectorySeparatorChar)) {

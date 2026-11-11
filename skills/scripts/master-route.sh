@@ -24,6 +24,26 @@ resolve_root() {
   return 2
 }
 
+route_from_hint() {
+  # Shared rules: skills/scripts/route-rules.tsv (same file as master-route.* / case-init.ps1).
+  # Priority: android > js (incl. Electron/ASAR) > packaged runtime → triage first > binary > default triage
+  # Prints "PRIMARY<TAB>REASON"; first matching rule wins, case-insensitive.
+  local rules="$1" hint_lc primary reason re
+  hint_lc=$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')
+  if [[ ! -f "$rules" ]]; then
+    echo "ERROR: routing rules missing: $rules" >&2
+    return 2
+  fi
+  while IFS=$'\t' read -r primary reason re || [[ -n "$primary" ]]; do
+    [[ -z "$primary" || "$primary" == \#* || -z "$re" ]] && continue
+    if printf '%s' "$hint_lc" | grep -Eqi -e "$re"; then
+      printf '%s\t%s\n' "$primary" "$reason"
+      return 0
+    fi
+  done < "$rules"
+  printf '%s\t%s\n' 'skills/triage/' 'default triage for unknown/general sample'
+}
+
 HINT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,20 +64,9 @@ if [[ -z "$HINT" ]]; then
 fi
 
 ROOT="$(resolve_root)" || exit $?
-HINT_LC=$(printf '%s' "$HINT" | tr '[:upper:]' '[:lower:]')
-PRIMARY="skills/triage/"
-REASON="default triage for unknown/general sample"
-# Priority: android-apk > js-reverse > binary-reverse > triage
-if printf '%s' "$HINT_LC" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk'; then
-  PRIMARY="skills/android-apk/"
-  REASON="Android/APK keywords in hint"
-elif printf '%s' "$HINT_LC" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs'; then
-  PRIMARY="skills/js-reverse/"
-  REASON="JS/deobfuscation/signing keywords in hint"
-elif printf '%s' "$HINT_LC" | grep -Eqi 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制'; then
-  PRIMARY="skills/binary-reverse/"
-  REASON="native binary deep-analysis keywords in hint"
-fi
+ROUTE="$(route_from_hint "$ROOT/skills/scripts/route-rules.tsv" "$HINT")" || exit $?
+PRIMARY="${ROUTE%%$'\t'*}"
+REASON="${ROUTE#*$'\t'}"
 
 PRIMARY_ABS="$ROOT/$PRIMARY"
 SKILL_MD="${PRIMARY_ABS}SKILL.md"

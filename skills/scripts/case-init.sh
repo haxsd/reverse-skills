@@ -26,18 +26,23 @@ resolve_root() {
 
 
 route_from_hint() {
-  # Priority: android-apk > js-reverse > binary-reverse > triage (aligned with MASTER-ROUTING / master-route)
-  local hint_lc
-  hint_lc=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
-  if printf '%s' "$hint_lc" | grep -Eqi 'apk|xapk|aar|android|jadx|smali|manifest|retrofit|okhttp|安卓|反编译apk'; then
-    printf '%s\n' 'skills/android-apk/'
-  elif printf '%s' "$hint_lc" | grep -Eqi 'javascript|\bjs\b|webpack|obfuscator|sourcemap|解混淆|前端签名|加密参数|js逆向|deobfuscat|\bbundle\b|bundle\.js|\.mjs'; then
-    printf '%s\n' 'skills/js-reverse/'
-  elif printf '%s' "$hint_lc" | grep -Eqi 'ghidra|\bida\b|radare|rizin|反汇编|反编译|binary-reverse|\belf\b|mach-o|macho|\bpe\b|\.so\b|\.dll\b|\.exe\b|原生二进制'; then
-    printf '%s\n' 'skills/binary-reverse/'
-  else
-    printf '%s\n' 'skills/triage/'
+  # Shared rules: skills/scripts/route-rules.tsv (same file as master-route.* / case-init.ps1).
+  # Priority: android > js (incl. Electron/ASAR) > packaged runtime → triage first > binary > default triage
+  # Prints "PRIMARY<TAB>REASON"; first matching rule wins, case-insensitive.
+  local rules="$1" hint_lc primary reason re
+  hint_lc=$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')
+  if [[ ! -f "$rules" ]]; then
+    echo "ERROR: routing rules missing: $rules" >&2
+    return 2
   fi
+  while IFS=$'\t' read -r primary reason re || [[ -n "$primary" ]]; do
+    [[ -z "$primary" || "$primary" == \#* || -z "$re" ]] && continue
+    if printf '%s' "$hint_lc" | grep -Eqi -e "$re"; then
+      printf '%s\t%s\n' "$primary" "$reason"
+      return 0
+    fi
+  done < "$rules"
+  printf '%s\t%s\n' 'skills/triage/' 'default triage for unknown/general sample'
 }
 
 HINT="" CASE_NAME="" PRESET="" SAMPLE="" PROJECT_ROOT=""
@@ -67,7 +72,8 @@ if [[ -z "$HINT" || -z "$CASE_NAME" ]]; then
 fi
 
 ROOT="$(resolve_root)" || exit $?
-PRIMARY="$(route_from_hint "$HINT")"
+ROUTE="$(route_from_hint "$ROOT/skills/scripts/route-rules.tsv" "$HINT")" || exit $?
+PRIMARY="${ROUTE%%$'\t'*}"
 PRIMARY_ABS="$ROOT/$PRIMARY"
 SKILL_MD="${PRIMARY_ABS}SKILL.md"
 if [[ ! -f "$SKILL_MD" ]]; then
@@ -128,7 +134,8 @@ ASSETS=""
   printf '%s\n' "- status: $AUTH_STATUS"
   printf '%s\n' "- basis: $AUTH_BASIS"
   printf '%s\n' "- evidence_of_auth: $EVIDENCE"
-  printf '%s\n' "- MUST NOT proceed if status != granted" ""
+  printf '%s\n' "- MUST NOT proceed if status != granted"
+  printf '%s\n' "- 检查≠运行/抓包/附加/碰设备账号：获准检查样本不等于获准运行、抓网络、附加进程或触碰设备/账号；这些动作须单独写进 in_scope.activities（离开本地文件还需非 offline 的 network_profile）" ""
   printf '%s\n' "## in_scope"
   printf '%s\n' "- assets:"
   if [[ -n "$ASSETS" ]]; then printf '%s\n' "$ASSETS"; fi
@@ -143,7 +150,28 @@ ASSETS=""
   printf '%s\n' "## deliverables"
   printf '%s\n' "- report: true"
   printf '%s\n' "- timeline: true"
+  printf '%s\n' "- questions: true"
 } > "$CASE_DIR/scope.md"
+
+# questions.md template (kept if it already exists — it holds case work)
+if [[ ! -f "$CASE_DIR/questions.md" ]]; then
+  {
+    printf '%s\n' '# Questions'
+    printf '%s\n' ""
+    printf '%s\n' '<!--'
+    printf '%s\n' '大任务（覆盖多个功能或子系统）先在这里列问题，以及每条需要什么证据；见 skills/core/evidence-labels.md。'
+    printf '%s\n' '每条一个 "## Q<n>: <问题>" 小节，新条目默认 status: unanswered。'
+    printf '%s\n' '收尾时每条必须改成且只能是其一：answered（已回答） / partially-answered（部分回答） / unresolved（未解决）。'
+    printf '%s\n' '有界否定写成「在范围 X 内未找到」，不能写成「不存在」。review_case.py 会核对状态（--strict 时缺状态或仍为 unanswered 判失败）。'
+    printf '%s\n' ""
+    printf '%s\n' '示例：'
+    printf '%s\n' '## Q1: <问题>'
+    printf '%s\n' '- evidence_needed: <需要什么证据>'
+    printf '%s\n' '- status: unanswered'
+    printf '%s\n' '- answer: <结论 + 证据标签，或有界否定>'
+    printf '%s\n' '-->'
+  } > "$CASE_DIR/questions.md"
+fi
 
 READY=false
 [[ "$AUTH_STATUS" == "granted" ]] && READY=true
